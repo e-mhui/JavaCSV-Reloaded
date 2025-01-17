@@ -38,9 +38,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-import main.com.csvreader.CsvReader;
-import main.com.csvreader.CsvWriter;
+import com.csvreader.CsvReader;
+import com.csvreader.CsvWriter;
 
+import java.util.Arrays;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -949,6 +951,7 @@ public class AllTests {
 	@Test
 	public void test43() throws Exception {
 		String data = "\"line 1\\nline 2\",\"line 1\\\nline 2\"";
+		System.out.println(data);
 
 		CsvReader reader = CsvReader.parse(data);
 		reader.setEscapeMode(CsvReader.ESCAPE_MODE_BACKSLASH);
@@ -2374,5 +2377,45 @@ public class AllTests {
 				ByteBuffer.wrap(buffer)).toString();
 
 		Assert.assertEquals("\"a\r\nb\"\r\n", data);
+	}
+
+	/**
+	 * Test the or logic between multiple separators
+	 */
+	@Test
+	public void test179() throws Exception {
+		CsvReader reader = CsvReader.parse("1,|'\r\n,|a'\r\n2,|b\r,\n3,ac");
+		reader.setDelimiters(Arrays.asList(",|" ));
+		reader.setTextQualifier('\'');
+		reader.setRecordDelimiters(Arrays.asList("\r\n", "\r,\n"));
+
+		Assert.assertTrue(reader.readRecord());
+		Assert.assertEquals("1", reader.get(0));
+		Assert.assertEquals("\r\n,|a", reader.get(1));
+
+		Assert.assertTrue(reader.readRecord());
+		Assert.assertEquals("2", reader.get(0));
+		Assert.assertEquals("b", reader.get(1));
+		Assert.assertEquals(',', reader.getDelimiter());
+
+		Assert.assertTrue(reader.readRecord());
+		Assert.assertEquals("3,ac", reader.get(0));
+		reader.close();
+	}
+
+	/**
+	 * test insufficient quantity of dataBuffer
+	 */
+	@Test
+	public void test180() throws Exception {
+		// need to modify StaticSettings.MAX_BUFFER_SIZE = 2
+		CsvReader reader = CsvReader.parse("1,|=:abc");
+		reader.setDelimiters(Arrays.asList(",|=:"));
+
+		Assert.assertTrue(reader.readRecord());
+		Assert.assertEquals("1", reader.get(0));
+		Assert.assertEquals("abc", reader.get(1));
+
+		reader.close();
 	}
 }

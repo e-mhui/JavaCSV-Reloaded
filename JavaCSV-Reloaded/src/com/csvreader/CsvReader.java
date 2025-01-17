@@ -18,7 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
-package main.com.csvreader;
+package com.csvreader;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,7 +31,10 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * A stream based parser for parsing delimited text data from a file or a
@@ -114,6 +117,26 @@ public class CsvReader {
 	 */
 	public CsvReader(String fileName, char delimiter, Charset charset)
 			throws FileNotFoundException {
+		this(fileName, Collections.singletonList(String.valueOf(delimiter)), charset);
+	}
+
+	/**
+	 * Creates a {@link com.csvreader.CsvReader CsvReader} object using a file
+	 * as the data source.
+	 *
+	 * @param fileName
+	 *            The path to the file to use as the data source.
+	 * @param delimiters
+	 *            The delimiters to use as the column delimiter.
+	 *            Support setting multiple delimiter, where the logic between multiple delimiter is 'or '.
+	 *            Only one of them needs to be matched, for example, if delimiters=Arrays.asList(";", "|")
+	 *            it will be matched `;` or `|` will be recognized as a delimiter.
+	 * @param charset
+	 *            The {@link java.nio.charset.Charset Charset} to use while
+	 *            parsing the data.
+	 */
+	public CsvReader(String fileName, List<String> delimiters, Charset charset)
+			throws FileNotFoundException {
 		if (fileName == null) {
 			throw new IllegalArgumentException(
 					"Parameter fileName can not be null.");
@@ -130,14 +153,14 @@ public class CsvReader {
 		}
 
 		this.fileName = fileName;
-		this.userSettings.Delimiter = delimiter;
+		this.userSettings.Delimiters = delimiters;
 		this.charset = charset;
 
 		isQualified = new boolean[values.length];
 	}
 
 	/**
-	 * Creates a {@link com.csvreader.CsvReader CsvReader} object using a file
+	 * Creates a {@link CsvReader CsvReader} object using a file
 	 * as the data source.&nbsp;Uses ISO-8859-1 as the
 	 * {@link java.nio.charset.Charset Charset}.
 	 * 
@@ -152,7 +175,7 @@ public class CsvReader {
 	}
 
 	/**
-	 * Creates a {@link com.csvreader.CsvReader CsvReader} object using a file
+	 * Creates a {@link CsvReader CsvReader} object using a file
 	 * as the data source.&nbsp;Uses a comma as the column delimiter and
 	 * ISO-8859-1 as the {@link java.nio.charset.Charset Charset}.
 	 * 
@@ -164,7 +187,7 @@ public class CsvReader {
 	}
 
 	/**
-	 * Constructs a {@link com.csvreader.CsvReader CsvReader} object using a
+	 * Constructs a {@link CsvReader CsvReader} object using a
 	 * {@link java.io.Reader Reader} object as the data source.
 	 * 
 	 * @param inputStream
@@ -173,20 +196,33 @@ public class CsvReader {
 	 *            The character to use as the column delimiter.
 	 */
 	public CsvReader(Reader inputStream, char delimiter) {
+		this(inputStream, Collections.singletonList(String.valueOf(delimiter)));
+	}
+
+	/**
+	 * Constructs a {@link CsvReader CsvReader} object using a
+	 * {@link java.io.Reader Reader} object as the data source.
+	 *
+	 * @param inputStream
+	 *            The stream to use as the data source.
+	 * @param delimiter
+	 *            The character to use as the column delimiter.
+	 */
+	public CsvReader(Reader inputStream, List<String> delimiters) {
 		if (inputStream == null) {
 			throw new IllegalArgumentException(
 					"Parameter inputStream can not be null.");
 		}
 
 		this.inputStream = inputStream;
-		this.userSettings.Delimiter = delimiter;
+		this.userSettings.Delimiters = delimiters;
 		initialized = true;
 
 		isQualified = new boolean[values.length];
 	}
 
 	/**
-	 * Constructs a {@link com.csvreader.CsvReader CsvReader} object using a
+	 * Constructs a {@link CsvReader CsvReader} object using a
 	 * {@link java.io.Reader Reader} object as the data source.&nbsp;Uses a
 	 * comma as the column delimiter.
 	 * 
@@ -198,7 +234,7 @@ public class CsvReader {
 	}
 
 	/**
-	 * Constructs a {@link com.csvreader.CsvReader CsvReader} object using an
+	 * Constructs a {@link CsvReader CsvReader} object using an
 	 * {@link java.io.InputStream InputStream} object as the data source.
 	 * 
 	 * @param inputStream
@@ -214,7 +250,7 @@ public class CsvReader {
 	}
 
 	/**
-	 * Constructs a {@link com.csvreader.CsvReader CsvReader} object using an
+	 * Constructs a {@link CsvReader CsvReader} object using an
 	 * {@link java.io.InputStream InputStream} object as the data
 	 * source.&nbsp;Uses a comma as the column delimiter.
 	 * 
@@ -266,11 +302,26 @@ public class CsvReader {
 	/**
 	 * Gets the character being used as the column delimiter. Default is comma,
 	 * ','.
+	 * <p>
+	 * <strong>Note:</strong> This method is only work when delimiter is a single character.
+	 * </p>
 	 * 
 	 * @return The character being used as the column delimiter.
 	 */
 	public char getDelimiter() {
-		return userSettings.Delimiter;
+		if (userSettings.Delimiters.size() > 1) {
+			throw new UnsupportedOperationException("This method is only work when delimiter is a single character.");
+		}
+		return userSettings.Delimiters.get(0).charAt(0);
+	}
+
+	/**
+	 * Gets all column delimiter. Default is comma, ','.
+	 *
+	 * @return All column delimiter.
+	 */
+	public List<String> getDelimiters() {
+		return userSettings.Delimiters;
 	}
 
 	/**
@@ -280,11 +331,46 @@ public class CsvReader {
 	 *            The character to use as the column delimiter.
 	 */
 	public void setDelimiter(char delimiter) {
-		userSettings.Delimiter = delimiter;
+		setDelimiters(Collections.singletonList(String.valueOf(delimiter)));
 	}
 
+	/**
+	 * Set multiple strings as column separators, with OR logic between them, and only one match is true.
+	 * For example, if delimiter=Arrays. asList (";;", "|"),
+	 * the delimiter is `;;` Or `|` can be used as column separators.
+	 * Default is comma, ','.
+	 *
+	 * @param delimiter
+	 *            The String to use as the column delimiter.
+	 */
+	public void setDelimiters(List<String> delimiter) {
+		userSettings.Delimiters = delimiter;
+	}
+
+	/**
+	 * Gets the character being used as the record delimiter. Default is null,
+	 * ' '.
+	 *
+	 * <p>
+	 * <strong>Note:</strong> This method is only work when delimiter is a single character.
+	 * </p>
+	 *
+	 * @return The character being used as the record column delimiter.
+	 */
 	public char getRecordDelimiter() {
-		return userSettings.RecordDelimiter;
+		if (userSettings.RecordDelimiters.size() > 1) {
+			throw new UnsupportedOperationException("This method is only work when delimiter is a single character.");
+		}
+		return userSettings.RecordDelimiters.get(0).charAt(0);
+	}
+
+	/**
+	 * Gets all record delimiter. Default is null, ' '.
+	 *
+	 * @return All record delimiter.
+	 */
+	public List<String> getRecordDelimiters() {
+		return userSettings.RecordDelimiters;
 	}
 
 	/**
@@ -296,8 +382,22 @@ public class CsvReader {
 	 *            Unix, or Mac.
 	 */
 	public void setRecordDelimiter(char recordDelimiter) {
+		setRecordDelimiters(Collections.singletonList(String.valueOf(recordDelimiter)));
+	}
+
+	/**
+
+	 * Set multiple strings as record delimiters, with OR logic between them, and only one match is true.
+	 * For example, if delimiters=Arrays.asList ("\r,\n", "\r\n"),
+	 * the delimiter is `\r,\n` Or `\r\n` can be used as record delimiter.
+	 * Default is null, ' '.
+	 *
+	 * @param recordDelimiters
+	 *            The string to use as the record delimiter.
+	 */
+	public void setRecordDelimiters(List<String> recordDelimiters) {
 		useCustomRecordDelimiter = true;
-		userSettings.RecordDelimiter = recordDelimiter;
+		userSettings.RecordDelimiters = recordDelimiters;
 	}
 
 	/**
@@ -463,10 +563,10 @@ public class CsvReader {
 
 	/**
 	 * Gets the count of headers read in by a previous call to
-	 * {@link com.csvreader.CsvReader#readHeaders readHeaders()}.
+	 * {@link CsvReader#readHeaders readHeaders()}.
 	 * 
 	 * @return The count of headers read in by a previous call to
-	 *         {@link com.csvreader.CsvReader#readHeaders readHeaders()}.
+	 *         {@link CsvReader#readHeaders readHeaders()}.
 	 */
 	public int getHeaderCount() {
 		return headersHolder.Length;
@@ -557,13 +657,13 @@ public class CsvReader {
 	}
 
 	/**
-	 * Creates a {@link com.csvreader.CsvReader CsvReader} object using a string
+	 * Creates a {@link CsvReader CsvReader} object using a string
 	 * of data as the source.&nbsp;Uses ISO-8859-1 as the
 	 * {@link java.nio.charset.Charset Charset}.
 	 * 
 	 * @param data
 	 *            The String of data to use as the source.
-	 * @return A {@link com.csvreader.CsvReader CsvReader} object using the
+	 * @return A {@link CsvReader CsvReader} object using the
 	 *         String of data as the source.
 	 */
 	public static CsvReader parse(String data) {
@@ -592,6 +692,9 @@ public class CsvReader {
 		dataBuffer.LineStart = dataBuffer.Position;
 
 		hasReadNextLine = false;
+
+		int delimiterLen = 1;
+		int recordDelimiterLen = 1;
 
 		// check to see if we've already found the end of data
 
@@ -650,11 +753,16 @@ public class CsvReader {
 								if (eatingTrailingJunk) {
 									dataBuffer.ColumnStart = dataBuffer.Position + 1;
 
-									if (currentLetter == userSettings.Delimiter) {
-										endColumn();
-									} else if ((!useCustomRecordDelimiter && (currentLetter == Letters.CR || currentLetter == Letters.LF))
-											|| (useCustomRecordDelimiter && currentLetter == userSettings.RecordDelimiter)) {
-										endColumn();
+									if ((delimiterLen = getColumnDelimiterLen(currentLetter)) != -1) {
+										endColumn(delimiterLen);
+									} else if (!useCustomRecordDelimiter && (currentLetter == Letters.CR
+											|| currentLetter == Letters.LF)) {
+										endColumn(1);
+
+										endRecord();
+									} else if ((useCustomRecordDelimiter
+											&& (recordDelimiterLen = getRecordDelimiterLen(currentLetter)) != -1)) {
+										endColumn(recordDelimiterLen);
 
 										endRecord();
 									}
@@ -711,7 +819,6 @@ public class CsvReader {
 										lastLetterWasQualifier = false;
 									} else {
 										updateCurrentValue();
-
 										if (userSettings.EscapeMode == ESCAPE_MODE_DOUBLED) {
 											lastLetterWasEscape = true;
 										}
@@ -804,11 +911,16 @@ public class CsvReader {
 									lastLetterWasEscape = true;
 								} else {
 									if (lastLetterWasQualifier) {
-										if (currentLetter == userSettings.Delimiter) {
-											endColumn();
-										} else if ((!useCustomRecordDelimiter && (currentLetter == Letters.CR || currentLetter == Letters.LF))
-												|| (useCustomRecordDelimiter && currentLetter == userSettings.RecordDelimiter)) {
-											endColumn();
+										if ((delimiterLen = getColumnDelimiterLen(currentLetter) ) != -1) {
+											endColumn(delimiterLen);
+										} else if (!useCustomRecordDelimiter && (currentLetter == Letters.CR
+												|| currentLetter == Letters.LF)) {
+											endColumn(1);
+
+											endRecord();
+										} else if (useCustomRecordDelimiter
+												&& (recordDelimiterLen = getRecordDelimiterLen(currentLetter) ) != -1) {
+											endColumn(recordDelimiterLen);
 
 											endRecord();
 										} else {
@@ -857,19 +969,19 @@ public class CsvReader {
 							} // end else
 
 						} while (hasMoreData && startedColumn);
-					} else if (currentLetter == userSettings.Delimiter) {
+					} else if ((delimiterLen = getColumnDelimiterLen(currentLetter)) != -1) {
 						// we encountered a column with no data, so
 						// just send the end column
 
 						lastLetter = currentLetter;
 
-						endColumn();
+						endColumn(delimiterLen);
 					} else if (useCustomRecordDelimiter
-							&& currentLetter == userSettings.RecordDelimiter) {
+							&& ((recordDelimiterLen = getRecordDelimiterLen(currentLetter)) != -1)) {
 						// this will skip blank lines
 						if (startedColumn || columnsCount > 0
 								|| !userSettings.SkipEmptyRecords) {
-							endColumn();
+							endColumn(recordDelimiterLen);
 
 							endRecord();
 						} else {
@@ -883,7 +995,7 @@ public class CsvReader {
 						if (startedColumn
 								|| columnsCount > 0
 								|| (!userSettings.SkipEmptyRecords && (currentLetter == Letters.CR || lastLetter != Letters.CR))) {
-							endColumn();
+							endColumn(1);
 
 							endRecord();
 						} else {
@@ -1066,13 +1178,19 @@ public class CsvReader {
 
 									lastLetterWasBackslash = false;
 								} else {
-									if (currentLetter == userSettings.Delimiter) {
-										endColumn();
-									} else if ((!useCustomRecordDelimiter && (currentLetter == Letters.CR || currentLetter == Letters.LF))
-											|| (useCustomRecordDelimiter && currentLetter == userSettings.RecordDelimiter)) {
-										endColumn();
+									if ((delimiterLen = getColumnDelimiterLen(currentLetter)) != -1) {
+										endColumn(delimiterLen);
+									} else if (!useCustomRecordDelimiter
+											&& (currentLetter == Letters.CR || currentLetter == Letters.LF)) {
+										endColumn(1);
 
 										endRecord();
+									} else if (useCustomRecordDelimiter
+											&& (recordDelimiterLen = getRecordDelimiterLen(currentLetter)) != -1) {
+										endColumn(recordDelimiterLen);
+
+										endRecord();
+
 									}
 								}
 
@@ -1120,8 +1238,12 @@ public class CsvReader {
 			// check to see if we hit the end of the file
 			// without processing the current record
 
-			if (startedColumn || lastLetter == userSettings.Delimiter) {
-				endColumn();
+			if (startedColumn || (delimiterLen = getColumnDelimiterLen(lastLetter)) != -1) {
+				if (delimiterLen != -1) {
+					endColumn(delimiterLen);
+				} else {
+					endColumn(1);
+				}
 
 				endRecord();
 			}
@@ -1195,6 +1317,7 @@ public class CsvReader {
 		}
 
 		try {
+			// 读 1024 个字节到 dataBuffer 中
 			dataBuffer.Count = inputStream.read(dataBuffer.Buffer, 0,
 					dataBuffer.Buffer.length);
 		} catch (IOException ex) {
@@ -1291,17 +1414,20 @@ public class CsvReader {
 	 * @exception IOException
 	 *                Thrown if a very rare extreme exception occurs during
 	 *                parsing, normally resulting from improper data format.
+	 * @param delimiterLen
+	 * 				The length of the delimiter in the dataBuffer.
 	 */
-	private void endColumn() throws IOException {
+	private void endColumn(int delimiterLen) throws IOException {
 		String currentValue = "";
 
 		// must be called before setting startedColumn = false
 		if (startedColumn) {
 			if (columnBuffer.Position == 0) {
 				if (dataBuffer.ColumnStart < dataBuffer.Position) {
-					int lastLetter = dataBuffer.Position - 1;
+					int lastLetter = dataBuffer.Position - delimiterLen;
 
 					if (userSettings.TrimWhitespace && !startedWithQualifier) {
+						// trim whitespace characters
 						while (lastLetter >= dataBuffer.ColumnStart
 								&& (dataBuffer.Buffer[lastLetter] == Letters.SPACE || dataBuffer.Buffer[lastLetter] == Letters.TAB)) {
 							lastLetter--;
@@ -1315,7 +1441,7 @@ public class CsvReader {
 			} else {
 				updateCurrentValue();
 
-				int lastLetter = columnBuffer.Position - 1;
+				int lastLetter = columnBuffer.Position - delimiterLen;
 
 				if (userSettings.TrimWhitespace && !startedWithQualifier) {
 					while (lastLetter >= 0
@@ -1391,8 +1517,12 @@ public class CsvReader {
 		dataBuffer.ColumnStart = dataBuffer.Position + 1;
 	}
 
+	/**
+	 * Update the data in columnBuffer, copy all the data in dataBuffer to columnBuffer, and update columnStart.
+	 */
 	private void updateCurrentValue() {
 		if (startedColumn && dataBuffer.ColumnStart < dataBuffer.Position) {
+			// column 的余量不够了，存在无法接收 dataBuffer 的可能性，需要扩容 columnBuffer
 			if (columnBuffer.Buffer.length - columnBuffer.Position < dataBuffer.Position
 					- dataBuffer.ColumnStart) {
 				int newLength = columnBuffer.Buffer.length
@@ -1415,7 +1545,6 @@ public class CsvReader {
 			columnBuffer.Position += dataBuffer.Position
 					- dataBuffer.ColumnStart;
 		}
-
 		dataBuffer.ColumnStart = dataBuffer.Position + 1;
 	}
 
@@ -1458,7 +1587,7 @@ public class CsvReader {
 	/**
 	 * Skips the next record of data by parsing each column.&nbsp;Does not
 	 * increment
-	 * {@link com.csvreader.CsvReader#getCurrentRecord getCurrentRecord()}.
+	 * {@link CsvReader#getCurrentRecord getCurrentRecord()}.
 	 * 
 	 * @return Whether another record was successfully skipped or not.
 	 * @exception IOException
@@ -1538,6 +1667,79 @@ public class CsvReader {
 		rawRecord = "";
 
 		return skippedLine;
+	}
+
+	/**
+	 * get column delimiter len.
+	 *
+	 * @param currentLetter current letter
+	 * @return the length of the delimiter. If -1 is returned, it means it is not a delimiter.
+	 * @throws IOException IOException
+	 */
+	private int getColumnDelimiterLen(char currentLetter) throws IOException {
+		return findDelimiterLen(currentLetter, userSettings.Delimiters);
+	}
+
+	/**
+	 * get record delimiter len.
+	 *
+	 * @param currentLetter current letter
+	 * @return the length of the delimiter. If -1 is returned, it means it is not a delimiter.
+	 *
+	 * @throws IOException IOException
+	 */
+	private int getRecordDelimiterLen(char currentLetter) throws IOException {
+		return findDelimiterLen(currentLetter, userSettings.RecordDelimiters);
+	}
+
+	/**
+	 * Find delimiter len.
+	 *
+	 * @param currentLetter current letter
+	 * @param delimiters delimiters
+	 * @return the length of the delimiter.
+	 * @throws IOException IOException
+	 */
+	public int findDelimiterLen(char currentLetter, List<String> delimiters) throws IOException {
+		for (String delimiterStr : delimiters) {
+			char[] delimiter = delimiterStr.toCharArray();
+			if (currentLetter != delimiter[0]) {
+				continue;
+			}
+			if (delimiter.length == 1) {
+				return 1;
+			}
+			int delimiterLen = delimiter.length;
+			char[] buffer = new char[delimiterLen];
+			int skipLenInNextRead = 0;
+			// Using pre ReadBuffer to read pre-read characters instead of expanding
+			// the dataBuffer length may result in OOM
+			char[] preReadBuffer = new char[0];
+			if (dataBuffer.Position + delimiterLen > dataBuffer.Buffer.length) {
+				skipLenInNextRead = dataBuffer.Position + delimiterLen - dataBuffer.Buffer.length;
+				preReadBuffer = new char[skipLenInNextRead];
+				inputStream.mark(skipLenInNextRead);
+				inputStream.read(preReadBuffer, 0, skipLenInNextRead);
+				inputStream.reset();
+				System.arraycopy(dataBuffer.Buffer, dataBuffer.Position, buffer, 0,
+						dataBuffer.Buffer.length - dataBuffer.Position);
+				System.arraycopy(preReadBuffer, 0, buffer,
+						dataBuffer.Buffer.length - dataBuffer.Position, skipLenInNextRead);
+			} else {
+				System.arraycopy(dataBuffer.Buffer, dataBuffer.Position, buffer, 0, delimiterLen);
+			}
+			if (!Arrays.equals(buffer, delimiter)) {
+				continue;
+			}
+			// discard skipLenInNextRead characters
+			if (skipLenInNextRead > 0) {
+				inputStream.read(preReadBuffer, 0, skipLenInNextRead);
+			}
+			// move to the last character position of the delimiter
+			dataBuffer.Position = dataBuffer.Position + (delimiterLen - skipLenInNextRead - 1);
+			return delimiterLen - skipLenInNextRead;
+		}
+		return -1;
 	}
 
 	/**
@@ -1714,9 +1916,9 @@ public class CsvReader {
 
 		public boolean UseTextQualifier;
 
-		public char Delimiter;
+		public List<String> Delimiters;
 
-		public char RecordDelimiter;
+		public List<String> RecordDelimiters;
 
 		public char Comment;
 
@@ -1735,8 +1937,8 @@ public class CsvReader {
 			TextQualifier = Letters.QUOTE;
 			TrimWhitespace = true;
 			UseTextQualifier = true;
-			Delimiter = Letters.COMMA;
-			RecordDelimiter = Letters.NULL;
+			Delimiters = Collections.singletonList(String.valueOf(Letters.COMMA));
+			RecordDelimiters = Collections.singletonList(String.valueOf(Letters.NULL));
 			Comment = Letters.POUND;
 			UseComments = false;
 			EscapeMode = CsvReader.ESCAPE_MODE_DOUBLED;

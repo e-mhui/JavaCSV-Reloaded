@@ -25,3 +25,20 @@ NOTE: I did not change the CsvReader class. That means it works exactly the
 same way as it used to. So, if you want to force a \r\n as a line separator
 then you won't be able to do that as the method setRecordDelimiter for the
 CsvReader class is unchanged. Please, feel free to improve this.
+
+---
+
+New abilities
+1. Supports strings as record and column delimiter.
+2. Multiple row and column delimiters can be set, and the logic between multiple delimiters is or.
+
+useage:
+
+```java
+		CsvReader reader = CsvReader.parse("1,|'\r\n,|a'\r\n2,|b\r,\n3,ac");
+		reader.setDelimiters(Arrays.asList(",|" ));
+		reader.setTextQualifier('\'');
+		reader.setRecordDelimiters(Arrays.asList("\r\n", "\r,\n"));
+```
+
+more test see `AllTests.test179()`.
