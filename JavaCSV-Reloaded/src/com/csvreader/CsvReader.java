@@ -693,7 +693,7 @@ public class CsvReader {
 
 		hasReadNextLine = false;
 
-		int delimiterLen = 1;
+		int delimiterLen = -1;
 		int recordDelimiterLen = 1;
 
 		// check to see if we've already found the end of data
@@ -1238,7 +1238,7 @@ public class CsvReader {
 			// check to see if we hit the end of the file
 			// without processing the current record
 
-			if (startedColumn || (delimiterLen = getColumnDelimiterLen(lastLetter)) != -1) {
+			if (startedColumn || delimiterLen != -1) {
 				if (delimiterLen != -1) {
 					endColumn(delimiterLen);
 				} else {

@@ -2418,4 +2418,26 @@ public class AllTests {
 
 		reader.close();
 	}
+
+	/**
+	 * test without processing the current record
+	 */
+	@Test
+	public void test181() throws Exception {
+		CsvReader reader = CsvReader.parse("1,");
+		reader.setDelimiters(Arrays.asList(","));
+
+		Assert.assertTrue(reader.readRecord());
+		Assert.assertEquals(2, reader.getColumnCount());
+		Assert.assertEquals("1", reader.get(0));
+
+		reader = CsvReader.parse("1,|=:");
+		reader.setDelimiters(Arrays.asList(",|=:"));
+
+		Assert.assertTrue(reader.readRecord());
+		Assert.assertEquals(2, reader.getColumnCount());
+		Assert.assertEquals("1", reader.get(0));
+
+		reader.close();
+	}
 }

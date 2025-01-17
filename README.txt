@@ -32,7 +32,7 @@ New abilities
 1. Supports strings as record and column delimiter.
 2. Multiple row and column delimiters can be set, and the logic between multiple delimiters is or.
 
-useage:
+usage:
 
 ```java
 		CsvReader reader = CsvReader.parse("1,|'\r\n,|a'\r\n2,|b\r,\n3,ac");
