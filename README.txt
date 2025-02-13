@@ -35,10 +35,10 @@ New abilities
 usage:
 
 ```java
-		CsvReader reader = CsvReader.parse("1,|'\r\n,|a'\r\n2,|b\r,\n3,ac");
-		reader.setDelimiters(Arrays.asList(",|" ));
-		reader.setTextQualifier('\'');
-		reader.setRecordDelimiters(Arrays.asList("\r\n", "\r,\n"));
+	CsvReader reader = CsvReader.parse("1,|'\r\n,|a'\r\n2,|b\r,\n3,ac");
+	reader.setDelimiters(Arrays.asList(",|" ));
+	reader.setTextQualifier("\"");
+	reader.setRecordDelimiters(Arrays.asList("\r\n", "\r,\n"));
 ```
 
 more test see `AllTests.test179()`.
