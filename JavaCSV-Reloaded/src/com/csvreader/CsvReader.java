@@ -205,7 +205,7 @@ public class CsvReader {
 	 *
 	 * @param inputStream
 	 *            The stream to use as the data source.
-	 * @param delimiter
+	 * @param delimiters
 	 *            The character to use as the column delimiter.
 	 */
 	public CsvReader(Reader inputStream, List<String> delimiters) {
@@ -1317,9 +1317,8 @@ public class CsvReader {
 		}
 
 		try {
-			// 读 1024 个字节到 dataBuffer 中
-			dataBuffer.Count = inputStream.read(dataBuffer.Buffer, 0,
-					dataBuffer.Buffer.length);
+			// Note: inputStream.read cannot guarantee reading the length byte of dataBuffer.Buffer.length
+			dataBuffer.Count = inputStream.read(dataBuffer.Buffer, 0, dataBuffer.Buffer.length);
 		} catch (IOException ex) {
 			close();
 
@@ -1715,16 +1714,18 @@ public class CsvReader {
 			// Using pre ReadBuffer to read pre-read characters instead of expanding
 			// the dataBuffer length may result in OOM
 			char[] preReadBuffer = new char[0];
-			if (dataBuffer.Position + delimiterLen > dataBuffer.Buffer.length) {
-				skipLenInNextRead = dataBuffer.Position + delimiterLen - dataBuffer.Buffer.length;
+			if (dataBuffer.Position + delimiterLen > dataBuffer.Count) {
+				skipLenInNextRead = dataBuffer.Position + delimiterLen - dataBuffer.Count;
 				preReadBuffer = new char[skipLenInNextRead];
 				inputStream.mark(skipLenInNextRead);
-				inputStream.read(preReadBuffer, 0, skipLenInNextRead);
+				int count = inputStream.read(preReadBuffer, 0, skipLenInNextRead);
 				inputStream.reset();
+				// First, copy the bytes from the previous dataBuffer into the buffer
 				System.arraycopy(dataBuffer.Buffer, dataBuffer.Position, buffer, 0,
-						dataBuffer.Buffer.length - dataBuffer.Position);
+						dataBuffer.Count - dataBuffer.Position);
+				// Copy the remaining bytes from the preReadBuffer into the buffer
 				System.arraycopy(preReadBuffer, 0, buffer,
-						dataBuffer.Buffer.length - dataBuffer.Position, skipLenInNextRead);
+						dataBuffer.Count - dataBuffer.Position, skipLenInNextRead);
 			} else {
 				System.arraycopy(dataBuffer.Buffer, dataBuffer.Position, buffer, 0, delimiterLen);
 			}
